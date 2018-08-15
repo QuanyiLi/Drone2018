@@ -11,6 +11,7 @@
 #include "timer.h" 
 #include <thread>
 #include "getImg.h" //深度图处理
+#include "Set_Altitude.h"
 
 
 //命名空间
@@ -208,6 +209,10 @@ void get_img(void)
 struct control_cmd {
 	bool flag_enable = false;//true表示该指令没执行过,需要执行一次
 	int flag_move = 0;// 0是停止，1是pitch/roll模式移动，2是inclination/orientation模式移动，3是设定高度
+
+	//llf增加的指令变量
+	int flag_set_altitude = 1;		//1表示高度精调，2表示高度粗调
+
 	float pitch = .0f, roll = .0f;
 	float inclination = .0f, orientation = .0f;
 	float duration = .05f;				//持续时间
@@ -215,13 +220,15 @@ struct control_cmd {
 	float yaw_rate = 0.0f;
 
 };//放头文件里
+
 struct control_cmd control_cmdset;
 bool flag_H = false;//指示顶高是否完成，ture表示定高完成
+
 //设置控制命令
-//void set_control_cmd(bool flag_enable=true, int flag_move=0, float pitch = .0f, float roll = .0f,
+//void set_control_cmd(bool flag_enable=true, int flag_move=0,  int flag_set_altitude, float pitch = .0f, float roll = .0f,
 //					 float inclination = .0f, float orientation = .0f, float duration=0.05f, 
 //					 float set_H = .0f, float yaw_rate = 0.0f)
-void set_control_cmd(bool flag_enable, int flag_move, float pitch, float roll,
+void set_control_cmd(bool flag_enable, int flag_move, int flag_set_altitude, float pitch, float roll,
 					 float inclination, float orientation, float duration,
 					 float set_H, float yaw_rate)
 {
@@ -229,6 +236,10 @@ void set_control_cmd(bool flag_enable, int flag_move, float pitch, float roll,
 
 	control_cmdset.flag_enable		= flag_enable;
 	control_cmdset.flag_move		= flag_move;
+
+	//llf: 设置定高方式
+	control_cmdset.flag_set_altitude = flag_set_altitude;
+
 	control_cmdset.pitch			= pitch;
 	control_cmdset.roll				= roll;
 	control_cmdset.inclination		= inclination;
@@ -239,6 +250,7 @@ void set_control_cmd(bool flag_enable, int flag_move, float pitch, float roll,
 
 	g_mutex_control_cmd.unlock();//释放锁
 }
+
 void move_control(void)//移动控制线程
 {
 	clock_t time_1= clock();//get time
@@ -259,6 +271,10 @@ void move_control(void)//移动控制线程
 		g_mutex_control_cmd.lock();//加锁
 		control_cmdset_temp.flag_enable		= control_cmdset.flag_enable;
 		control_cmdset_temp.flag_move		= control_cmdset.flag_move;
+
+		//llf增加的
+		control_cmdset_temp.flag_set_altitude = control_cmdset.flag_set_altitude;
+
 		control_cmdset_temp.pitch			= control_cmdset.pitch;
 		control_cmdset_temp.roll			= control_cmdset.roll;
 		control_cmdset_temp.inclination		= control_cmdset.inclination;
@@ -269,9 +285,9 @@ void move_control(void)//移动控制线程
 
 		control_cmdset.flag_enable = false;
 		g_mutex_control_cmd.unlock();//释放锁
-		if (control_cmdset_temp.flag_enable)
+		if (control_cmdset_temp.flag_enable)	//该指令未执行过
 		{
-			switch (control_cmdset_temp.flag_move)
+			switch (control_cmdset_temp.flag_move)	//移动模式
 			{
 			default:
 			case 0:// 0是停止
@@ -286,18 +302,13 @@ void move_control(void)//移动控制线程
 				break;
 			case 3://3是设定高度
 				client.hover();//hover
-				// 控制高度函数();
-				//
-				//
-				//
-				//
+				setAltitude(control_cmdset_temp.set_H, control_cmdset_temp.flag_set_altitude);
 				break;
 			}
 		}
 	}
-
-
 }
+
 static int key_control(int key)//按键控制
 {
 	clock_t time_1;// = clock();//get time
@@ -335,35 +346,53 @@ static int key_control(int key)//按键控制
 		throttle -= 0.1f;
 		break;
 	case 'a'://旋转时会下降...
-		set_control_cmd(true, 1, .0f, .0f, .0f, .0f, 0.05f, .0f, -0.7f);
+		//set_control_cmd(true, 1, .0f, .0f, .0f, .0f, 0.05f, .0f, -0.7f);
+		set_control_cmd(true, 1, 1, .0f, .0f, .0f, .0f, 0.05f, .0f, -0.7f);	//llf增加了flag_set_altitude
 		break;
 	case 'd':
-		set_control_cmd(true, 1, .0f, .0f, .0f, .0f, 0.05f, .0f, 0.7f);
+		//set_control_cmd(true, 1, .0f, .0f, .0f, .0f, 0.05f, .0f, 0.7f);
+		set_control_cmd(true, 1, 1, .0f, .0f, .0f, .0f, 0.05f, .0f, 0.7f);	//llf增加了flag_set_altitude
 		break;
 
 	//下面是以机头方向前后左右
 	case 'i'://pitch y轴逆时针角度
-		set_control_cmd(true, 1, -0.1f, .0f, .0f, .0f, 0.05f, .0f, .0f);
+		//set_control_cmd(true, 1, -0.1f, .0f, .0f, .0f, 0.05f, .0f, .0f);
+		set_control_cmd(true, 1, 1, -0.1f, .0f, .0f, .0f, 0.05f, .0f, .0f);	//llf增加了flag_set_altitude
 		break;
 	case 'k'://pitch y轴逆时针角度
-		set_control_cmd(true, 1, 0.1f, .0f, .0f, .0f, 0.05f, .0f, .0f);
-
+		//set_control_cmd(true, 1, 0.1f, .0f, .0f, .0f, 0.05f, .0f, .0f);
+		set_control_cmd(true, 1, 1, 0.1f, .0f, .0f, .0f, 0.05f, .0f, .0f);	//llf增加了flag_set_altitude
 		break;
 	case 'j'://roll x轴逆时针角度
-		set_control_cmd(true, 1, .0f, -0.1f, .0f, .0f, 0.05f, .0f, .0f);
+		//set_control_cmd(true, 1, .0f, -0.1f, .0f, .0f, 0.05f, .0f, .0f);
+		set_control_cmd(true, 1, 1, .0f, -0.1f, .0f, .0f, 0.05f, .0f, .0f);	//llf增加了flag_set_altitude
 		break;
 	case 'l'://roll x轴逆时针角度
-		set_control_cmd(true, 1, .0f, 0.1f, .0f, .0f, 0.05f, .0f, .0f);
+		//set_control_cmd(true, 1, .0f, 0.1f, .0f, .0f, 0.05f, .0f, .0f);
+		set_control_cmd(true, 1, 1, .0f, 0.1f, .0f, .0f, 0.05f, .0f, .0f);	//llf增加了flag_set_altitude
 		break;
 	case 2490368://方向键上
 		throttle += 0.0003f;
 		printf("throttle=%f\n", throttle);
 		break;
 	case 2621440://方向键下
-
 		throttle -= 0.0003f;
 		printf("throttle=%f\n", throttle);
+		break;
 
+	//llf增加的测试语句
+	case '8':
+		float target_altitude;
+		int mode, set_altitude_result;
+		cout << "please input target_altitude , mode :";
+		cin >> target_altitude;
+		cin >> mode;
+		controlAltitude(target_altitude, mode);
+		//set_altitude_result = setAltitude(target_altitude, mode);
+		//cout << "set_altitude_result = " << set_altitude_result << endl;
+		break;
+	case '9':
+		cout << "current_altitude = " << Barometer_data.altitude << endl;
 		break;
 	default:
 		break;

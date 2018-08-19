@@ -1,9 +1,16 @@
-.gitignore ºöÂÔÁËAirlib/
-ºöÂÔÁËOpenCV_install£¬OPENCV3.4.0
-Ìí¼ÓÁË¶¯Ì¬Á´½Ó¿âµ½x64/ReleaseÀï
-Ìí¼ÓÁË¾²Ì¬¿âlibÎÄ¼þ¼Ð
-Ôö¼ÓÁË°´¼ü¿ØÖÆ
+.gitignore å¿½ç•¥äº†Airlib/
+å¿½ç•¥äº†OpenCV_installï¼ŒOPENCV3.4.0
+æ·»åŠ äº†åŠ¨æ€é“¾æŽ¥åº“åˆ°x64/Releaseé‡Œ
+æ·»åŠ äº†é™æ€åº“libæ–‡ä»¶å¤¹
+å¢žåŠ äº†æŒ‰é”®æŽ§åˆ¶
 
 
-²âÊÔÈý¸öÏß³ÌÄÜ²»ÄÜÍ¬Ê±»ñÈ¡´«¸ÐÆ÷Êý¾ÝºÍÍ¼ÏñºÍ¿ØÖÆº¯Êý
-TODO£ºÃ»ÓÐÌí¼ÓcudaµÄ¶¯Ì¬Á´½Ó¿â
+æµ‹è¯•ä¸‰ä¸ªçº¿ç¨‹èƒ½ä¸èƒ½åŒæ—¶èŽ·å–ä¼ æ„Ÿå™¨æ•°æ®å’Œå›¾åƒå’ŒæŽ§åˆ¶å‡½æ•°
+TODOï¼šæ²¡æœ‰æ·»åŠ cudaçš„åŠ¨æ€é“¾æŽ¥åº“
+
+
+
+
+
+
+æµ‹è¯•ä¸€ä¸‹
